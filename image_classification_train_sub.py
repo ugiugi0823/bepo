@@ -65,16 +65,16 @@ def exec_train(tm):
     my_path = os.path.join(tm.train_data_path, 'dataset') + '/'
 
     df = pd.read_csv(f'{my_path}/train.csv')
-    
+
     # Tokenize all of the sentences and map the tokens to thier word IDs.
-    
+
     tokenizer = AutoTokenizer.from_pretrained("cardiffnlp/twitter-roberta-base-sentiment")
 
     input_ids, attention_masks, labels = get_input_mask_label(df, tokenizer)
 
     # Combine the training inputs into a TensorDataset.
     dataset = TensorDataset(input_ids, attention_masks, labels)
-    
+
 
     # Create a 90-10 train-validation split.
 
@@ -446,7 +446,7 @@ def exec_init_svc(im):
 
 
 
-def exec_inference(text, params, batch_id):
+def exec_inference(df, params, batch_id):
 
     ###########################################################################
     ## 4. 추론(Inference)
@@ -458,21 +458,26 @@ def exec_inference(text, params, batch_id):
     model = params['model']
     print(model)
     logging.info('[hunmin log] model.summary() :')
-    
-    
+
+
 
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    
+
     model.to(device)
-    
+
     tokenizer = AutoTokenizer.from_pretrained("cardiffnlp/twitter-roberta-base-sentiment")
-    
-    input_ids, attention_masks, labels = get_input_mask_label_infer(text, tokenizer)
+
+
+
+
+    input_ids, attention_masks, labels = get_input_mask_label(df, tokenizer)
+
+
     test_dataset = TensorDataset(input_ids, attention_masks, labels)
     test_dataloader = DataLoader(
-            test_dataset, 
-            batch_size = 1 
+            test_dataset,
+            batch_size = 1
         )
 
 
@@ -485,9 +490,9 @@ def exec_inference(text, params, batch_id):
 
     y_an = []
     y_pred = []
-    
+
     for batch in test_dataloader:
-      
+
 
 
       # Unpack this training batch from our dataloader.
@@ -530,24 +535,24 @@ def exec_inference(text, params, batch_id):
 
       # Calculate the accuracy for this batch of test sentences, and
       # accumulate it over all batches.
-      
-      
 
-      
+
+
+
       pred_flat = np.argmax(logits, axis=1).flatten()
       labels_flat = label_ids.flatten()
-      
+
       y_an.append(labels_flat.item())
       y_pred.append(pred_flat.item())
       # print(len(y_an))
 
-    
-    print('모델이 예측한 값은?? ',pred_flat)
+
+    print('모델이 예측한 값은?? ',y_pred[0])
 
 
 
     # inverse transform
-    result = {'inference' : pred_flat}
+    result = {'inference' : y_pred[0]}
     logging.info('[hunmin log] result : {}'.format(result))
 
     return result
@@ -593,7 +598,7 @@ def get_input_mask_label(df, tokenizer):
   # Tokenize all of the sentences and map the tokens to thier word IDs.
   input_ids = []
   attention_masks = []
-  
+
 
   for sent in sentences:
       # `encode_plus` will:
@@ -639,7 +644,7 @@ def get_input_mask_label_infer(text, tokenizer):
   # Tokenize all of the sentences and map the tokens to thier word IDs.
   input_ids = []
   attention_masks = []
-  
+
 
   for sent in sentences:
       # `encode_plus` will:
