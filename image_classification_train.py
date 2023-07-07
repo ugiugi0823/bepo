@@ -20,9 +20,9 @@ def init_svc(im):
     return { **params }
 
 
-def inference(text, params, batch_id):
+def inference(df, params, batch_id):
 
-    result = exec_inference(text, params, batch_id)
+    result = exec_inference(df, params, batch_id)
     logging.info('[hunmin log] the end line of the function [inference]')
 
     return { **result }
